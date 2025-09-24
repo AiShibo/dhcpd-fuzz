@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("user \"_dhcp\" not found");
 
-#if 0
+#ifndef NO_PF
 	/* don't go near /dev/pf unless we actually intend to use it */
 	if ((abandoned_tab != NULL) ||
 	    (changedmac_tab != NULL) ||
@@ -247,88 +247,7 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
-#endif /*GaNO_PF */
-
-
-	if (pipe(pfpipe) == -1)
-		fatal("pipe");
-
-
-	for (;;) {
-		unsigned char metadata[8];
-		unsigned char *payload = NULL;
-		ssize_t bytes_read;
-		unsigned char sender;
-		unsigned char msg_type;
-		unsigned short msg_size;
-		uint32_t msg_id;
-		size_t payload_read = 0;
-
-		char valid_types[] = {'A', 'C', 'L', 'R', 'K'};
-		static int counter = 0;
-		if (counter > 10)
-			break;
-		counter++;
-
-
-		bytes_read = read(STDIN_FILENO, metadata, 1);
-		if (bytes_read <= 0) break;
-		sender = metadata[0] % 2;
-
-		bytes_read = read(STDIN_FILENO, metadata + 1, 1);
-		if (bytes_read <= 0) break;
-
-		msg_type = (metadata[1] % sizeof(valid_types));
-
-		bytes_read = read(STDIN_FILENO, metadata + 2, 2);
-		if (bytes_read < 2) break;
-		msg_size = (metadata[2] | (metadata[3] << 8)) % 8192;
-		msg_size = sizeof(struct pf_cmd);
-
-		bytes_read = read(STDIN_FILENO, metadata + 4, 4);
-		if (bytes_read < 4) break;
-		msg_id =
-			((uint32_t)(uint8_t)metadata[4])       |
-			((uint32_t)(uint8_t)metadata[5] << 8)  |
-			((uint32_t)(uint8_t)metadata[6] << 16) |
-			((uint32_t)(uint8_t)metadata[7] << 24);
-
-		if (msg_size > 0) {
-			payload = malloc(msg_size);
-			if (payload == NULL) break;
-
-			while (payload_read < msg_size) {
-				bytes_read = read(STDIN_FILENO, payload + payload_read, msg_size - payload_read);
-				if (bytes_read <= 0) break;
-				payload_read += bytes_read;
-			}
-		}
-
-		if (payload_read >= sizeof(struct pf_cmd)) {
-			((struct pf_cmd *)payload)->type = valid_types[msg_type];
-		}
-
-		printf("Fuzzing: sending msg_type=%d, size=%zu, id=%u to %s\n",
-				msg_type, payload_read, msg_id, (sender == 0) ? "other_side" : "other_constraint");
-
-		atomicio(vwrite, pfpipe[1], payload, payload_read);
-
-		if (payload != NULL) {
-			free(payload);
-			payload = NULL;
-		}
-	}
-
-	struct pf_cmd my_cmd;
-	my_cmd.type = 'G';
-	atomicio(vwrite, pfpipe[1], &my_cmd, sizeof(struct pf_cmd));
-
-
-	pftable_handler();
-	// send with pfpipe[1]
-	//
-
-
+#endif /* NO_PF */
 
 	if (udpsockmode)
 		udpsock_startup(udpaddr);

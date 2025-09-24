@@ -54,22 +54,18 @@ pftable_handler()
 	struct pollfd pfd[1];
 	int l, r, fd, nfds;
 
-	if ((fd = open("/dev/pf", O_RDWR|O_NOFOLLOW)) == -1)
+	if ((fd = open(_PATH_DEV_PF, O_RDWR|O_NOFOLLOW)) == -1)
 		fatal("can't open pf device");
 #ifndef __OpenBSD__
-	/*
 	if (chroot("/var/empty") == -1)
 		fatal("chroot /var/empty");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
-	*/
 #endif
-	/*
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-		*/
 
 	/* no filesystem visibility */
 #ifdef __OpenBSD__
@@ -139,8 +135,6 @@ pftable_handler()
 				 */
 				pf_change_table(fd, 0, cmd.ip, leased_tab);
 				break;
-			case 'G':
-				exit(1);
 			default:
 				break;
 			}

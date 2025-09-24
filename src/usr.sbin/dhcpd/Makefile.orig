@@ -13,6 +13,6 @@ LDADD+=-lcrypto -lmd
 CFLAGS+=-Wall -D__dead=''
 
 .include <bsd.prog.mk>
-CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes -O0 -g
+CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=-Wmissing-declarations
 CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
